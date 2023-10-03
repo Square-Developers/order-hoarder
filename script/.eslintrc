@@ -1,0 +1,9 @@
+{
+  "env": {
+    "node": true
+  },
+  "rules": {
+    "no-process-exit": "off",
+    "unicorn/no-process-exit": "off"
+  }
+}

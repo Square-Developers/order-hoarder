@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -x
+
+# Abort script at first error, when a command exits with non-zero status.
+# Verbose form of `set -e`.
+set -o errexit
+
+# If set, the return value of a pipeline is the value of the last (rightmost)
+# command to exit with a non-zero status, or zero if all commands in the
+# pipeline exit successfully.
+set -o pipefail
+
+source env/bin/activate
+
+export NODE_ENV=test
+
+function install_dependencies() {
+  yarn config set registry "https://artifactory.global.square/artifactory/api/npm/square-npm/"
+  yarn install --non-interactive --no-progress --frozen-lockfile
+}
+
+function run() {
+  RUN_LIST=$(echo "$RUN_LIST" | tr "," " ")
+  case "$TEST_RUNNER" in
+    test) yarn test;;
+    build) yarn build;;
+    *)
+      echo "Unknown TEST_RUNNER: $TEST_RUNNER" && exit 1
+      ;;
+  esac
+}
+
+function prepare_and_run() {
+  install_dependencies
+  run
+}
+
+prepare_and_run
+success=$?
+exit $success

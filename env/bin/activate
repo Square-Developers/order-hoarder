@@ -1,0 +1,26 @@
+# NOTE: This file is copied from SQ/devenv (https://github.com/squareup/devenv)
+# and should not be edited directly.
+
+if [ -z "$DEVENV_INSTALL_ROOT" ]; then
+  DEVENV_INSTALL_ROOT="${HOME}/.devenv"
+fi
+
+_devenv_activate="${DEVENV_INSTALL_ROOT}/standalone/env/bin/activate"
+
+if [ ! -f "$_devenv_activate" ]; then
+  env -i HOME="$HOME" USER="$USER" PATH="$PATH" SSH_AUTH_SOCK="$SSH_AUTH_SOCK" sh -c " \
+    git clone --quiet org-49461806@github.com:squareup/devenv.git '$DEVENV_INSTALL_ROOT'
+  " >/dev/null 2>&1
+else
+  env -i HOME="$HOME" USER="$USER" PATH="$PATH" SSH_AUTH_SOCK="$SSH_AUTH_SOCK" sh -c " \
+    cd '$DEVENV_INSTALL_ROOT'
+    git reset --hard origin/master && git pull --rebase &
+   " >/dev/null 2>&1
+fi
+
+if [ ! -f "$_devenv_activate" ]; then
+  echo "✘ unable to find or install devenv (expected at ${DEVENV_INSTALL_ROOT})" >&2
+else
+  source "$_devenv_activate"
+  unset _devenv_activate
+fi

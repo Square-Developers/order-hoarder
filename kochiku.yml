@@ -1,0 +1,10 @@
+test_command: script/ci
+targets:
+  - type: test
+  - type: build
+
+build_artifacts:
+  order-hoarder:
+    ecr_container: Dockerfile
+    distributions:
+      - el7

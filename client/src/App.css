@@ -1,0 +1,27 @@
+.app-container {
+  margin: auto;
+  max-width: 600px;
+}
+
+.header {
+  margin-top: 8vmin;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  min-height: 4rem;
+  height: 16vmin;
+  max-height: 8rem;
+  margin-bottom: 2rem;
+}
+
+.logo,
+.title,
+.subtitle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
