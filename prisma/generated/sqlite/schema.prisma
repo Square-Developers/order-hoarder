@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/sqlite"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("SQLITE_URL")
+}
+
+model User {
+  id               String      @id @default(uuid())
+  username         String      @unique
+  password         String
+  userDeniedSquare Boolean     @default(false)
+  firstName        String?
+  lastName         String?
+  salt             String
+  avatar           String
+  createdAt        DateTime    @default(now())
+  metaData         MetaData?
+  squareData       SquareData?
+}
+
+model SquareData {
+  id         String    @id @default(uuid())
+  tokens     String
+  expiresAt  String
+  merchantId String
+  userId     String @unique
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MetaData {
+  id                     String @id @default(uuid())
+  userId                 String @unique
+  iv                     String
+  scopes                 String
+  squareTokenLastUpdated DateTime @default(now())
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
