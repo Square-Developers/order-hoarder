@@ -9,7 +9,7 @@ While we have many APIs and your app could integrate with any number of them, we
 
 ## How we recommend you use this sample application
 1. Clone this repo to have the code on hand.
-1. Open the [live demo](https://order-hoarder.vercel.app/) and start playing around with it. There are lots of little notes and steps to explain what is happening in the app. There are also call-outs to specific file names, which you can open in your local codebase to read more about how the app work.
+1. Open the [live demo](https://order-hoarder.fly.dev/) and start playing around with it. There are lots of little notes and steps to explain what is happening in the app. There are also call-outs to specific file names, which you can open in your local codebase to read more about how the app work.
 ### FYI
 1. You do not need to create an Order Hoarder account with a valid email address
 1. You will need a Square account when you do the authorization flow in Order Hoarder
