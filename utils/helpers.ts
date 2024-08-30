@@ -1,6 +1,7 @@
 import { NextApiRequest } from 'next'
 import { InternalServerError, NextApiUserRequest } from '../types'
 import { verify } from '../middleware'
+import { NumberFormatOptions } from 'intl'
 
 // validate the users JWT
 export const verifyJWT = async (req: NextApiUserRequest): Promise<boolean> => {
@@ -41,21 +42,21 @@ export const decodeJWT = (req: NextApiRequest): string => {
 export const formatMoney = function (value: bigint, currency: string) {
     let valueAsNumber = Number(value)
     // Create number formatter.
-    const props = {
+    const options: NumberFormatOptions = {
         style: 'currency',
         currency: currency,
         minimumFractionDigits: 2
     }
     // If the value is an integer, show no decimal digits.
     if (valueAsNumber % 1 == 0) {
-        props.minimumFractionDigits = 0
+        options.minimumFractionDigits = 0
     }
 
     // Some currencies don't need to use higher denominations to represent values.
     if (currency !== 'JPY') {
         valueAsNumber /= 100.0
     }
-    const formatter = new Intl.NumberFormat('en-US', props)
+    const formatter = new Intl.NumberFormat('en-US', options)
     return formatter.format(valueAsNumber)
 }
 
