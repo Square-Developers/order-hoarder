@@ -1,9 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { Error } from 'square'
 import { SquareData } from '../../../types'
-import { authorizeUser, getUser, updateUser } from '../../../lib/database'
-import { decodeJWT, isString } from '../../../utils/helpers'
+import { isString } from '../../../utils/helpers'
 import {getOauthClient} from '../../../utils/oauth-client'
+import createClient from '../../../utils/supabase/api'
+import { encryptToken } from '../../../utils/server-helpers'
+import { SCOPES } from '../../../constants'
+import createAdminClient from '../../../utils/supabase/admin'
+
 
 // TODO: Confirm this method handles all potential error cases gracefully
 export default async function handler(req: NextApiRequest, res: NextApiResponse<{ status: string } | { error: string } | Error[]>) {
@@ -13,22 +16,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     } else if (req.query['error']) {
         // Check to see if the seller clicked the 'deny' button and handle it as a special case.
         if (('access_denied' === req.query['error']) && ('user_denied' === req.query['error_description'])) {
-            const id = await decodeJWT(req)
-            const user = await getUser(id)
-            if (user) {
-                await updateUser({
-                    id,
-                    user: {
-                        ...user,
+            const supabase = createClient(req, res)
+            const {data: {user}} = await supabase.auth.getUser()
+            if (!user) {
+                throw new Error("user not found")
+            }
+            const adminSupabase = createAdminClient()
+            const { error } = await adminSupabase.auth.admin.updateUserById(
+                user.id,
+                { app_metadata: {
+                    squareData: {
                         userDeniedSquare: true
                     }
-                })
-            }
-            res.redirect('/settings')
+                } }
+              )
+            return res.redirect('/settings')
         }
         // Display the error and description for all other errors.
         else {
-            res.status(400).json({ error: `${req.query['error']}: ${req.query['error_description']}` })
+            return res.status(400).json({ error: `${req.query['error']}: ${req.query['error_description']}` })
         }
     }
     // When the response_type is "code", the seller clicked Allow
@@ -62,35 +68,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 merchantId
             } = result
 
-            // Prepare the data to be written to the database
+            const tokens = JSON.stringify({accessToken, refreshToken})            
+            const { iv, encrypted } = encryptToken(tokens)
+
             // NOTE: We will encrypt the access and refresh tokens before storing it. 
             const squareData: SquareData = {
-                tokens: JSON.stringify({
-                    accessToken,
-                    refreshToken
-                }),
+                tokens: encrypted,
                 expiresAt,
-                merchantId
+                merchantId,
+                iv,
+                scopes: SCOPES.join(','),
+                userDeniedSquare: false
             }
-            // grab the user id from the JWT
-            const id = await decodeJWT(req)
-            // update user object to reflect that they have authorized Square
-            const user = await getUser(id)
-            if (user?.userDeniedSquare) {
-                await updateUser({
-                    id,
-                    user: {
-                        ...user,
-                        userDeniedSquare: false
-                    }
-                })
-            }
-            // Update the database with the authorized Square data
-            await authorizeUser({
-                id,
-                squareData
-            })
 
+            const supabase = createClient(req, res)
+            const {data: {user}} = await supabase.auth.getUser()
+            if (!user) {
+                throw new Error("user not found")
+            }
+            const adminSupabase = createAdminClient()
+            const { error } = await adminSupabase.auth.admin.updateUserById(
+                user.id,
+                { app_metadata: {
+                    squareData
+                } }
+              )
+              if (error) {
+               console.log('failed to update user: ', error)
+              }
             res.redirect('/dashboard')
         } catch (error) {
             // The response from the Obtain Token endpoint did not include an access token. Something went wrong.

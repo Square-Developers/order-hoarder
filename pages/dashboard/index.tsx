@@ -6,12 +6,15 @@ import { useRouter } from 'next/router'
 import LayoutInternal from '../../components/Layouts/LayoutInternal'
 import Metrics from '../../components/Metrics'
 import { createStyles } from '@mantine/core'
-import useUser from '../../lib/useUser'
 import { Arrow } from '../../components/Tasks/Task/Arrow'
 import { Check } from '../../components/Tasks/Task/Check'
 import useSWR from 'swr'
 import { AuthStatus } from '../../types/user'
 
+import type { User } from '@supabase/supabase-js'
+import type { GetServerSidePropsContext } from 'next'
+
+import { createClient } from '../../utils/supabase/server-props'
 
 const useStyles = createStyles(() => ({
     header: {
@@ -29,10 +32,9 @@ const useStyles = createStyles(() => ({
     }
 }))
 
-export default function Dashboard() {
+export default function Dashboard({ user }: { user: User }) {
     const router = useRouter()
     const { classes } = useStyles()
-    const { user } = useUser()
 
     // if the user has data from Square
     const [hasSquareData, setHasSquareData] = useState<boolean>(false)
@@ -55,7 +57,7 @@ export default function Dashboard() {
 
     const mockTaskList: TaskProps[] = [
         {
-            title: user?.firstName ? `Welcome to Order Hoarder, ${user?.firstName}! ${String.fromCodePoint(0x1f389)}` : 'Welcome to Order Hoarder',
+            title: user?.email ? `Welcome to Order Hoarder, ${user?.user_metadata?.first_name}! ${String.fromCodePoint(0x1f389)}` : 'Welcome to Order Hoarder',
             description: 'In order to start using Order Hoarder, we need data from Square',
             color: '#151C1F',
         },
@@ -91,7 +93,7 @@ export default function Dashboard() {
     }
 
     return (
-        <LayoutInternal>
+        <LayoutInternal user={user}>
             <Container size='xl'>
                 <h1 className={classes.header}>Dashboard</h1>
                 {isLoading ? <div className={classes.loader}><Loader/></div> : <DashboardData/>}
@@ -99,3 +101,24 @@ export default function Dashboard() {
         </LayoutInternal>
     )
 }
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+    const supabase = createClient(context)
+  
+    const { data, error } = await supabase.auth.getUser()
+  
+    if (error || !data) {
+      return {
+        redirect: {
+          destination: '/',
+          permanent: false,
+        },
+      }
+    }
+  
+    return {
+      props: {
+        user: data.user,
+      },
+    }
+  }

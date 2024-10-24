@@ -77,12 +77,12 @@ export function LoginSignup({ variation }: LoginSignupProps) {
 
   const loginHandler = async () => {
     setIsLoading(true)
-    const data: { username: string, password: string } = {
+    const loginData: { username: string, password: string } = {
       username: email,
       password: password
     }
 
-    const info = validateFormInput(data)
+    const info = validateFormInput(loginData)
     if (info.length > 0 ){
       setIsLoading(false)
       showNotification({
@@ -99,9 +99,11 @@ export function LoginSignup({ variation }: LoginSignupProps) {
       await fetchJson('/api/users/authenticate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(loginData),
       })
+
       router.push('/dashboard')
+
     } catch (error) {
       setIsLoading(false)
       if (error instanceof FetchError) {
@@ -120,13 +122,13 @@ export function LoginSignup({ variation }: LoginSignupProps) {
 
   const signupHandler = async () => {
     setIsLoading(true)
-    const data: { username: string, password: string, firstName: string, lastName: string } = {
+    const loginData: { username: string, password: string, firstName: string, lastName: string } = {
       username: email,
       password,
       firstName,
       lastName
     }
-    const info = validateFormInput(data)
+    const info = validateFormInput(loginData)
     if (info.length > 0 ){
       setIsLoading(false)
       showNotification({
@@ -139,12 +141,28 @@ export function LoginSignup({ variation }: LoginSignupProps) {
       return
     }
     try {
-      await fetchJson('/api/users/signup', {
+      // Create the user in our DB
+      const { error } = await fetchJson('/api/users/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(loginData),
       })
-      router.push('/dashboard')
+
+
+      if (!error) {
+        router.push('/dashboard')
+        return
+      } else {
+        setIsLoading(false)
+        showNotification({
+          title: 'Error',
+          message: error.message,
+          autoClose: 3000,
+          color: 'red',
+          icon: <X />,
+        })
+        return
+      }
     } catch (error) {
       setIsLoading(false)
       if (error instanceof FetchError) {

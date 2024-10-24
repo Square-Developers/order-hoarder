@@ -3,8 +3,8 @@ import { UserButton } from '../UserButton'
 import { LinksGroup } from '../NavbarLinksGroup'
 import { Logo } from './Logo'
 import { useRouter } from 'next/router'
-import useUser from '../../../lib/useUser'
 import { NavBarItems } from '../../../types/components'
+import { User } from '@supabase/supabase-js'
 
 const navbarItems: NavBarItems[] = [
     {
@@ -60,10 +60,9 @@ const useStyles = createStyles((theme) => ({
 }))
 
 
-export function NavbarNested() {
+export function NavbarNested({ user }: { user: User }) {
     const { classes } = useStyles()
     const router = useRouter()
-    const { user } = useUser()
 
     const links = navbarItems.map((item) => <LinksGroup key={item.label} label={item.label} link={item.link} active={router.pathname} />)
     return (
@@ -79,14 +78,15 @@ export function NavbarNested() {
             </Navbar.Section>
 
             <Navbar.Section className={classes.footer}>
-                {user?.firstName &&
+                {user?.user_metadata?.first_name &&
                     <UserButton
-                        image={`https://www.gravatar.com/avatar/${user?.avatar || ''}?d=https%3A%2F%2Fimages.ctfassets.net%2F1wryd5vd9xez%2F5JA4qHKaSk47mqhd0M8s9p%2F99b9a16e0012ada4e2ecf31a4b4fb1fe%2Fsquare_logo.jpeg`}
-                        name={`${user?.firstName || ''} ${user?.lastName || ''}`}
-                        username={user?.username || ''}
+                        image={`https://www.gravatar.com/avatar/${user?.user_metadata?.avatar || ''}?d=https%3A%2F%2Fimages.ctfassets.net%2F1wryd5vd9xez%2F5JA4qHKaSk47mqhd0M8s9p%2F99b9a16e0012ada4e2ecf31a4b4fb1fe%2Fsquare_logo.jpeg`}
+                        name={`${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`}
+                        username={user?.email || ''}
                     />
                 }
             </Navbar.Section>
         </Navbar>
     )
 }
+
